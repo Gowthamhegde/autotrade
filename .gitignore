@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+
+# ML artifacts
+*.pkl
+*.joblib
+*.h5
+*.onnx
+mlruns/
+models/artifacts/
+
+# Data
+*.parquet
+*.csv
+*.db
+data/raw/
+data/processed/
+
+# Secrets
+.env
+.env.local
+secrets/
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node
+node_modules/
+.next/
+out/
+build/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
