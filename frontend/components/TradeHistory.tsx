@@ -19,14 +19,10 @@ export default function TradeHistory() {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                // In a real app, we'd have an endpoint for this. 
-                // For now, we'll mock it or assume there's an endpoint.
-                // Let's create a simple endpoint in backend or just mock it here for UI demo
-                // if the backend doesn't support listing all orders easily yet.
-                // But wait, we have 'app.brokers.paper' which stores orders in memory.
-                // We need an endpoint to get them.
-
-                const res = await axios.get('http://localhost:8005/api/v1/orders/');
+                const token = localStorage.getItem('token');
+                const res = await axios.get('http://localhost:8005/api/v1/orders/', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 setOrders(res.data);
             } catch (e) {
                 console.error(e);

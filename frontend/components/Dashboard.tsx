@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useRouter } from 'next/navigation';
 import TradeHistory from './TradeHistory';
 
 interface TickData {
@@ -28,26 +29,43 @@ export default function Dashboard() {
 
   const fetchWallet = async () => {
     try {
-      const res = await axios.get('http://localhost:8005/api/v1/wallet/');
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:8005/api/v1/wallet/', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setWallet(res.data);
     } catch (e) { console.error(e); }
   };
 
   const fetchStatus = async () => {
     try {
-      const res = await axios.get('http://localhost:8005/api/v1/market/status');
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:8005/api/v1/market/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setIsRunning(res.data.is_running);
       if (res.data.is_running) setSelectedSymbol(res.data.symbol);
     } catch (e) { console.error(e); }
   };
 
+  const router = useRouter();
+
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
     fetchWallet();
     fetchStatus();
 
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:8005/api/v1/market/tick?symbol=${encodeURIComponent(selectedSymbol)}`);
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`http://localhost:8005/api/v1/market/tick?symbol=${encodeURIComponent(selectedSymbol)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const tick = response.data;
 
         setCurrentTick(tick);
@@ -71,17 +89,28 @@ export default function Dashboard() {
   }, [selectedSymbol]);
 
   const handleStart = async () => {
-    await axios.post('http://localhost:8005/api/v1/market/start', { symbol: selectedSymbol });
+    const token = localStorage.getItem('token');
+    await axios.post('http://localhost:8005/api/v1/market/start',
+      { symbol: selectedSymbol },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     setIsRunning(true);
   };
 
   const handleStop = async () => {
-    await axios.post('http://localhost:8005/api/v1/market/stop');
+    const token = localStorage.getItem('token');
+    await axios.post('http://localhost:8005/api/v1/market/stop', {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     setIsRunning(false);
   };
 
   const handleDeposit = async () => {
-    await axios.post('http://localhost:8005/api/v1/wallet/deposit', { amount: parseFloat(depositAmount) });
+    const token = localStorage.getItem('token');
+    await axios.post('http://localhost:8005/api/v1/wallet/deposit',
+      { amount: parseFloat(depositAmount) },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     setShowDeposit(false);
     fetchWallet();
   };
