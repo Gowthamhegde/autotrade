@@ -7,45 +7,71 @@ class FeatureEngine:
     
     @staticmethod
     def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
-        """Add technical indicators to OHLCV dataframe"""
         df = df.copy()
         
-        # Moving averages
-        df['sma_5'] = df.ta.sma(length=5)
+        # Ensure pandas-ta is available
+        try:
+            import pandas_ta as ta
+        except ImportError:
+            raise ImportError("pandas-ta is required. pip install pandas-ta")
+
+        # 1. Trend Indicators
         df['sma_20'] = df.ta.sma(length=20)
-        df['ema_12'] = df.ta.ema(length=12)
-        df['ema_26'] = df.ta.ema(length=26)
+        df['sma_50'] = df.ta.sma(length=50)
+        df['ema_9'] = df.ta.ema(length=9)
+        df['ema_21'] = df.ta.ema(length=21)
         
-        # Momentum
-        df['rsi'] = df.ta.rsi(length=14)
-        macd = df.ta.macd(close=df['close'])
+        # MACD
+        macd = df.ta.macd(fast=12, slow=26, signal=9)
         if macd is not None:
             df = pd.concat([df, macd], axis=1)
-        
-        # Volatility
-        df['atr'] = df.ta.atr(length=14)
-        bbands = df.ta.bbands(length=20)
-        if bbands is not None:
-            # print(f"BBands columns: {bbands.columns}")
-            # Auto-detect columns
-            df = pd.concat([df, bbands], axis=1)
-            # Rename for consistency if needed, or just use them as is
-            # But for now let's just concat them, they are unique enough
-        
-        # Volume
-        df['obv'] = df.ta.obv()
+            
+        # ADX (Trend Strength)
+        adx = df.ta.adx(length=14)
+        if adx is not None:
+            df = pd.concat([df, adx], axis=1)
 
-        # Indian Market Specific (using pandas-ta)
-        # VWAP (Volume Weighted Average Price)
-        df.ta.vwap(append=True)
+        # 2. Momentum Indicators
+        df['rsi'] = df.ta.rsi(length=14)
+        df['stoch_k'] = df.ta.stoch(k=14, d=3, smooth_k=3)['STOCHk_14_3_3']
+        df['stoch_d'] = df.ta.stoch(k=14, d=3, smooth_k=3)['STOCHd_14_3_3']
+        
+        # CCI (Commodity Channel Index)
+        df['cci'] = df.ta.cci(length=20)
+
+        # 3. Volatility Indicators
+        # Bollinger Bands
+        bbands = df.ta.bbands(length=20, std=2)
+        if bbands is not None:
+            df = pd.concat([df, bbands], axis=1)
+            
+        # ATR (Average True Range)
+        df['atr'] = df.ta.atr(length=14)
+        
+        # 4. Volume Indicators
+        # VWAP (Volume Weighted Average Price) - Requires 'volume'
+        if 'volume' in df.columns:
+            # VWAP requires datetime index
+            df.ta.vwap(append=True)
+            
+            # OBV (On Balance Volume)
+            df['obv'] = df.ta.obv()
+
+        # 5. Custom Features
+        # Distance from SMA
+        df['dist_sma20'] = (df['close'] - df['sma_20']) / df['sma_20']
+        
+        # RSI Divergence (Simplified: RSI slope vs Price slope)
+        df['rsi_slope'] = df['rsi'].diff(3)
+        df['price_slope'] = df['close'].diff(3)
         
         # Supertrend
         supertrend = df.ta.supertrend(length=7, multiplier=3)
         if supertrend is not None:
             df = pd.concat([df, supertrend], axis=1)
-        
+
         return df
-    
+
     @staticmethod
     def add_lag_features(df: pd.DataFrame, lags=[1, 5, 15]) -> pd.DataFrame:
         """Add lagged return features"""
@@ -88,11 +114,11 @@ class FeatureEngine:
         return df
     
     @staticmethod
-    def create_labels(df: pd.DataFrame, horizon=30, threshold=0.001) -> pd.DataFrame:
+    def create_labels(df: pd.DataFrame, horizon=5, threshold=0.0015) -> pd.DataFrame:
         """Create labels for classification/regression"""
         df = df.copy()
         
-        # Future return
+        # Future return (5 candles ahead)
         df['future_return'] = df['close'].pct_change(horizon).shift(-horizon)
         
         # Binary label: 1 if return > threshold, 0 otherwise

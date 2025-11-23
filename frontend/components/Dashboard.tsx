@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -17,6 +18,9 @@ interface TickData {
   volume: number;
 }
 
+import PerformanceAnalyzer from './PerformanceAnalyzer';
+import PaymentModal from './PaymentModal';
+
 export default function Dashboard() {
   const [data, setData] = useState<any[]>([]);
   const [currentTick, setCurrentTick] = useState<TickData | null>(null);
@@ -25,7 +29,6 @@ export default function Dashboard() {
   const [isRunning, setIsRunning] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState("^NSEI");
   const [showDeposit, setShowDeposit] = useState(false);
-  const [depositAmount, setDepositAmount] = useState("");
 
   const fetchWallet = async () => {
     try {
@@ -105,18 +108,23 @@ export default function Dashboard() {
     setIsRunning(false);
   };
 
-  const handleDeposit = async () => {
+  const handleDepositSuccess = async (amount: number) => {
     const token = localStorage.getItem('token');
     await axios.post('http://localhost:8005/api/v1/wallet/deposit',
-      { amount: parseFloat(depositAmount) },
+      { amount: amount },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    setShowDeposit(false);
     fetchWallet();
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8 font-sans">
+      <PaymentModal
+        isOpen={showDeposit}
+        onClose={() => setShowDeposit(false)}
+        onSuccess={handleDepositSuccess}
+      />
+
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
@@ -131,12 +139,13 @@ export default function Dashboard() {
           </div>
           <button
             onClick={() => setShowDeposit(true)}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-blue-900/20"
           >
-            Add Funds
+            + Add Funds
           </button>
-          <div className={`px-3 py-1 rounded-full text-xs font-medium ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-            {isConnected ? '● System Online' : '○ Disconnected'}
+          <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-2 ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></span>
+            {isConnected ? 'System Online' : 'Disconnected'}
           </div>
         </div>
       </header>
@@ -147,49 +156,35 @@ export default function Dashboard() {
           value={selectedSymbol}
           onChange={(e) => setSelectedSymbol(e.target.value)}
           disabled={isRunning}
-          className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500"
+          className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500 min-w-[200px]"
         >
           <option value="^NSEI">NIFTY 50</option>
           <option value="^NSEBANK">BANK NIFTY</option>
+          <option value="^CNXFIN">FINNIFTY</option>
+          <option value="^BSESN">SENSEX</option>
+          <option value="^CNXIT">NIFTY IT</option>
         </select>
 
         {!isRunning ? (
           <button
             onClick={handleStart}
-            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-medium transition-all shadow-lg shadow-green-900/20"
+            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-medium transition-all shadow-lg shadow-green-900/20 flex items-center gap-2"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             Start Trading
           </button>
         ) : (
           <button
             onClick={handleStop}
-            className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-medium transition-all shadow-lg shadow-red-900/20 animate-pulse"
+            className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-medium transition-all shadow-lg shadow-red-900/20 animate-pulse flex items-center gap-2"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
             Stop Trading
           </button>
         )}
 
-        {isRunning && <span className="text-green-400 text-sm ml-auto">● Trading Active on {selectedSymbol}</span>}
+        {isRunning && <span className="text-green-400 text-sm ml-auto font-mono">● Trading Active on {selectedSymbol}</span>}
       </div>
-
-      {showDeposit && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-2xl w-96 border border-gray-700 shadow-2xl">
-            <h3 className="text-xl font-bold mb-4">Add Funds</h3>
-            <input
-              type="number"
-              value={depositAmount}
-              onChange={(e) => setDepositAmount(e.target.value)}
-              placeholder="Amount (₹)"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 mb-4 text-white outline-none focus:border-blue-500"
-            />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setShowDeposit(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-              <button onClick={handleDeposit} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">Deposit</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {/* Stats Cards */}
@@ -227,42 +222,46 @@ export default function Dashboard() {
 
       {/* Main Chart & History */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-gray-800/50 backdrop-blur-xl p-6 rounded-2xl border border-gray-700/50 shadow-xl h-[500px]">
-          <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-6">Real-time Market Data ({selectedSymbol})</h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-              <XAxis
-                dataKey="time"
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                domain={['auto', 'auto']}
-                stroke="#9CA3AF"
-                tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `₹${value}`}
-              />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                itemStyle={{ color: '#E5E7EB' }}
-                labelStyle={{ color: '#9CA3AF' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="last"
-                stroke="#8B5CF6"
-                strokeWidth={3}
-                dot={false}
-                activeDot={{ r: 6, fill: '#8B5CF6', stroke: '#fff', strokeWidth: 2 }}
-                animationDuration={500}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-gray-800/50 backdrop-blur-xl p-6 rounded-2xl border border-gray-700/50 shadow-xl h-[400px]">
+            <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-6">Real-time Market Data ({selectedSymbol})</h3>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+                <XAxis
+                  dataKey="time"
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  domain={['auto', 'auto']}
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `₹${value}`}
+                />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  itemStyle={{ color: '#E5E7EB' }}
+                  labelStyle={{ color: '#9CA3AF' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="last"
+                  stroke="#8B5CF6"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 6, fill: '#8B5CF6', stroke: '#fff', strokeWidth: 2 }}
+                  animationDuration={500}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <PerformanceAnalyzer />
         </div>
 
         <div className="lg:col-span-1">

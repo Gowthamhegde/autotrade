@@ -17,7 +17,7 @@ class TickData(BaseModel):
     volume: int
 
 @router.get("/tick")
-async def get_tick(symbol: str):
+async def get_tick(symbol: str, current_user = Depends(get_current_user)):
     broker = get_broker()
     tick = await broker.get_tick(symbol)
     return tick
@@ -41,16 +41,16 @@ class TradeRequest(BaseModel):
     symbol: str
 
 @router.post("/start")
-async def start_trading(req: TradeRequest):
+async def start_trading(req: TradeRequest, current_user = Depends(get_current_user)):
     engine = TradingEngine()
     return engine.start(req.symbol)
 
 @router.post("/stop")
-async def stop_trading():
+async def stop_trading(current_user = Depends(get_current_user)):
     engine = TradingEngine()
     return engine.stop()
 
 @router.get("/status")
-async def get_status():
+async def get_status(current_user = Depends(get_current_user)):
     engine = TradingEngine()
     return {"is_running": engine.is_running, "symbol": engine.symbol}

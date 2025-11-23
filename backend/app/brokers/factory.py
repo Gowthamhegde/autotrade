@@ -10,8 +10,7 @@ def get_broker():
         from app.brokers.paper import PaperBroker
         return PaperBroker()
     elif settings.BROKER_MODE == "zerodha":
-        # from app.brokers.zerodha import ZerodhaBroker
-        # return ZerodhaBroker()
-        raise NotImplementedError("Zerodha broker not yet implemented")
+        from app.brokers.zerodha import ZerodhaBroker
+        return ZerodhaBroker()
     else:
         raise ValueError(f"Unknown broker mode: {settings.BROKER_MODE}")

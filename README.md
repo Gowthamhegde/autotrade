@@ -1,58 +1,56 @@
-# NIFTY F&O AutoTrader
+# NIFTY AutoTrader
 
-ML-driven algorithmic trading platform for Indian derivatives (NIFTY & BankNIFTY futures & options).
+A full-stack automated trading bot for Indian Markets (NIFTY 50, BANK NIFTY) featuring an AI-driven prediction engine, real-time dashboard, and paper trading simulation.
 
-## Features
+## 🚀 Features
 
-- **Data Pipeline**: Ingest & store OHLCV + options chain data
-- **ML Engine**: XGBoost/LSTM models with feature engineering & MLflow tracking
-- **Backtester**: Event-driven simulation with realistic costs
-- **Execution**: Pluggable broker adapters (Zerodha/Upstox/IB) with mock mode
-- **Wallet & Ledger**: Margin management, P&L settlement, audit trail
-- **Dashboard**: Real-time positions, orders, P&L, risk metrics
-- **Risk Controls**: Position limits, circuit breakers, kill-switch
+- **AI/ML Engine**: Random Forest Classifier trained on historical data to predict market direction with high-confidence filtering.
+- **Real-time Dashboard**: Next.js + Tailwind CSS UI displaying live prices, charts, and account stats.
+- **Paper Trading**: Fully simulated broker environment with wallet management and order execution.
+- **Wallet System**: Deposit virtual funds and track your balance.
+- **Trade History**: View logs of all executed trades.
 
-## Quick Start
+## 🛠️ Tech Stack
 
+- **Backend**: FastAPI, Python, SQLAlchemy, Pandas-TA, Scikit-Learn.
+- **Frontend**: Next.js, React, Recharts, Tailwind CSS.
+- **Data**: `yfinance` for real-time and historical market data.
+- **Database**: SQLite (local).
+
+## 🏃‍♂️ How to Run
+
+### 1. Start the Backend
+The backend runs on port `8005`.
 ```bash
-# Clone and setup
-git clone <repo-url>
-cd nifty-autotrader
-
-# Start services (PostgreSQL, API, UI)
-docker-compose up -d
-
-# Access dashboard
-open http://localhost:3000
+cd backend
+# Install dependencies (if not done)
+# pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8005
 ```
 
-## Architecture
-
-```
-├── backend/          # FastAPI services
-│   ├── api/         # REST endpoints
-│   ├── core/        # Business logic
-│   ├── ml/          # Model training & inference
-│   └── brokers/     # Broker adapters
-├── frontend/        # React dashboard
-├── data/            # Data ingestion & storage
-├── notebooks/       # Research & analysis
-└── infra/          # Docker, K8s configs
+### 2. Start the Frontend
+The frontend runs on port `3001`.
+```bash
+cd frontend
+# Install dependencies (if not done)
+# npm install
+npx next dev -p 3001
 ```
 
-## Development
+### 3. Access the App
+Open your browser and navigate to:
+**http://localhost:3001**
 
-See [docs/SETUP.md](docs/SETUP.md) for detailed setup instructions.
+## 📖 Usage Guide
 
-**Default mode**: Paper trading (sandbox). No real money at risk.
+1.  **Add Funds**: Click the "Add Funds" button in the top right to deposit virtual capital.
+2.  **Select Index**: Choose between `NIFTY 50` or `BANK NIFTY`.
+3.  **Start Trading**: Click "Start Trading". The bot will begin monitoring the market.
+4.  **Watch**: The chart will update in real-time. When the ML model detects a high-confidence opportunity (>70%), it will execute a trade.
+5.  **Review**: Check the "Recent Trades" section to see buy/sell actions.
 
-## Security
+## 🤖 ML Model Details
 
-- API keys stored in secrets manager (never in code)
-- JWT authentication with RBAC
-- Audit logs for all trades
-- Manual approval required for live trading
-
-## License
-
-MIT
+- **Algorithm**: Random Forest Classifier.
+- **Features**: VWAP, Supertrend, RSI, MACD, Bollinger Bands.
+- **Logic**: Only takes trades when prediction probability is > 0.7 (Buy) or < 0.3 (Sell).

@@ -3,44 +3,12 @@ from app.services.data_loader import DataLoader
 from datetime import datetime
 import uuid
 import asyncio
+import yfinance as yf
 
 class PaperBroker(BaseBroker):
     """Paper trading broker using yfinance data"""
     
     def __init__(self):
-        self.orders = {}
-        self.positions = {}
-        self.balance = 1000000.0  # 10 Lakhs initial capital
-        
-    async def get_tick(self, symbol: str):
-        """Get latest tick from yfinance"""
-        # Fetch 1 day data, 1m interval to get latest
-        try:
-            df = DataLoader.fetch_history(symbol, period="1d", interval="1m")
-            if df.empty:
-                raise ValueError("No data")
-            
-            latest = df.iloc[-1]
-            
-            return {
-                "symbol": symbol,
-                "timestamp": latest['timestamp'],
-                "last": float(latest['close']),
-                "open": float(latest['open']),
-                "high": float(latest['high']),
-                "low": float(latest['low']),
-                "close": float(latest['close']),
-                "volume": int(latest['volume'])
-            }
-        except Exception as e:
-            print(f"Error fetching tick for {symbol}: {e}")
-            # Return mock data if fetch fails
-            return {
-                "symbol": symbol,
-                "timestamp": datetime.now(),
-                "last": 0.0,
-                "open": 0.0,
-                "high": 0.0,
                 "low": 0.0,
                 "close": 0.0,
                 "volume": 0

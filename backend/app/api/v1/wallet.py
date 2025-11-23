@@ -20,26 +20,21 @@ class DepositRequest(BaseModel):
     amount: float
 
 @router.get("/", response_model=WalletResponse)
-async def get_wallet(db: Session = Depends(get_db)):
-    # For demo, use user_id=1 (Admin)
-    user_id = 1
-    wallet = db.query(Wallet).filter(Wallet.user_id == user_id).first()
+async def get_wallet(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    wallet = db.query(Wallet).filter(Wallet.user_id == current_user.id).first()
     if not wallet:
         # Create wallet if doesn't exist
-        wallet = Wallet(user_id=user_id)
+        wallet = Wallet(user_id=current_user.id)
         db.add(wallet)
         db.commit()
         db.refresh(wallet)
     return wallet
 
 @router.post("/deposit")
-async def deposit(req: DepositRequest, db: Session = Depends(get_db)):
-    # For demo, use user_id=1
-    user_id = 1
-    
-    wallet = db.query(Wallet).filter(Wallet.user_id == user_id).first()
+async def deposit(req: DepositRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    wallet = db.query(Wallet).filter(Wallet.user_id == current_user.id).first()
     if not wallet:
-        wallet = Wallet(user_id=user_id)
+        wallet = Wallet(user_id=current_user.id)
         db.add(wallet)
     
     wallet.total_balance += req.amount

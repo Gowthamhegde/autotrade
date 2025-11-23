@@ -41,14 +41,24 @@ class ModelTrainer:
             X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
             y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
             
-            model = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
+            # Use Gradient Boosting for better accuracy
+            from sklearn.ensemble import GradientBoostingClassifier
+            model = GradientBoostingClassifier(
+                n_estimators=200,
+                learning_rate=0.1,
+                max_depth=5,
+                random_state=42
+            )
             model.fit(X_train, y_train)
             
-            # Evaluate only high confidence predictions (>0.8 or <0.2)
+            # Evaluate only high confidence predictions
             probs = model.predict_proba(X_val)[:, 1]
             
-            # Create a mask for high confidence
-            high_conf_mask = (probs > 0.7) | (probs < 0.3)
+            # Strict confidence mask (Top 5% confidence)
+            high_conf_threshold = np.percentile(probs, 95)
+            low_conf_threshold = np.percentile(probs, 5)
+            
+            high_conf_mask = (probs > high_conf_threshold) | (probs < low_conf_threshold)
             
             if sum(high_conf_mask) > 0:
                 y_val_conf = y_val[high_conf_mask]
@@ -63,7 +73,13 @@ class ModelTrainer:
         print(f"Average High Confidence Accuracy: {avg_acc:.4f}")
         
         # Train final model
-        final_model = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
+        from sklearn.ensemble import GradientBoostingClassifier
+        final_model = GradientBoostingClassifier(
+            n_estimators=200,
+            learning_rate=0.1,
+            max_depth=5,
+            random_state=42
+        )
         final_model.fit(X, y)
         
         # Save model to disk

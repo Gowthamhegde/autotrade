@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     ZERODHA_API_KEY: str = ""
     ZERODHA_API_SECRET: str = ""
     
+    # Razorpay Payment Gateway
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    
     MLFLOW_TRACKING_URI: str = "http://localhost:5000"
     
     MAX_POSITION_SIZE: int = 100000

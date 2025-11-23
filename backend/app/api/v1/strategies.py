@@ -25,3 +25,10 @@ async def deploy_strategy(strategy_id: int, db: Session = Depends(get_db), curre
     db.commit()
     
     return {"status": "deployed", "strategy_id": strategy_id}
+
+from app.services.analytics import AnalyticsService
+
+@router.get("/performance")
+async def get_performance(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    analytics = AnalyticsService(db, current_user.id)
+    return analytics.get_performance_metrics()

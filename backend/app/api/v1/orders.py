@@ -68,8 +68,6 @@ async def get_order(order_id: int, db: Session = Depends(get_db), current_user =
     return order
 
 @router.get("/")
-async def list_orders(db: Session = Depends(get_db)):
-    # For demo, use user_id=1
-    user_id = 1
-    orders = db.query(Order).filter(Order.user_id == user_id).order_by(Order.created_at.desc()).limit(100).all()
+async def list_orders(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    orders = db.query(Order).filter(Order.user_id == current_user.id).order_by(Order.created_at.desc()).limit(100).all()
     return orders
